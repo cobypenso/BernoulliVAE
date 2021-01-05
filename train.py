@@ -33,7 +33,7 @@ def train(vae, trainloader, optimizer, epoch):
         optimizer.step()
         loss_trace.append(-loss.item()/len(input)) # noramlize the loss by the batch size
 
-    epoch_loss = torch.mean(loss_trace)
+    epoch_loss = np.mean(loss_trace)
     print ("Epoch: {}, Loss: {}".format(epoch, epoch_loss))
 
     return epoch_loss
@@ -66,7 +66,7 @@ def test(vae, testloader, filename, epoch, total_epochs, sample_size):
             loss = vae(input)
             loss_trace.append(-loss.item()/len(input))  # noramlize the loss by the batch size
         
-        test_loss = torch.mean(loss_trace)
+        test_loss = np.mean(loss_trace)
         print ("Epoch: {}, Test Loss: {}".format(epoch, test_loss))
         return test_loss
 
@@ -127,10 +127,10 @@ def main(args):
     test_loss_trace= []
     for epoch in range(args.epochs):
         # Train Phase
-        loss = train(vae, trainloader, optimizer, epoch, device)   
+        loss = train(vae, trainloader, optimizer, epoch)   
         train_loss_trace.append(loss)
         # Test Phase
-        loss = test(vae, testloader, filename, epoch, args.epochs, args.sample_size, device)
+        loss = test(vae, testloader, filename, epoch, args.epochs, args.sample_size)
         test_loss_trace.append(loss)
     
     visualize_elbo(train_loss_trace, test_loss_trace)
