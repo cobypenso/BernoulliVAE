@@ -74,6 +74,10 @@ class Model(nn.Module):
             Loss function - the loss is build from two terms:
                 - BCELoss
                 - KLLoss
+                
+            @note - note that the loss is BCELoss(Negative cross entropy) + (instead of minus) the KL term is actually negative ELBO. 
+                    This is done in order for the optimiztion to work with minimizing target instead of maximazing the ELBO.
+                    -(BinaryCrossEntropy - KL) = -BinaryCrossEntropy + KL = BCELoss + KL
         '''
         BCELoss = self.criterion(recon, x)
         KLLoss = 0.5*(torch.exp(logvar) + mu**2 - logvar - 1).sum()
