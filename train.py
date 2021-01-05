@@ -67,7 +67,7 @@ def test(vae, testloader, filename, epoch, total_epochs, sample_size):
             x, _ = data
             x =  x.to(device)
                 
-            loss = vae(input)
+            loss = vae(x)
             loss_trace.append(-loss.item()/len(x))  # noramlize the loss by the batch size
         
         test_loss = np.mean(loss_trace)
