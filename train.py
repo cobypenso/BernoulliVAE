@@ -1,4 +1,5 @@
 ## Coby Penso 208254128 ##
+
 import argparse
 import matplotlib.pyplot as plt
 import torch, torchvision
@@ -22,16 +23,18 @@ def train(vae, trainloader, optimizer, epoch):
     '''
 
     vae.train()  # set to training mode
+    
     loss_trace = []
+    
     for data in trainloader:
-        input, _ = data
-        input = input.to(device)
+        x, _ = data
+        x = x.to(device)
         
         optimizer.zero_grad()
-        loss = vae(input)
+        loss = vae(x)
         loss.backward()
         optimizer.step()
-        loss_trace.append(-loss.item()/len(input)) # noramlize the loss by the batch size
+        loss_trace.append(-loss.item()/len(x)) # noramlize the loss by the batch size
 
     epoch_loss = np.mean(loss_trace)
     print ("Epoch: {}, Loss: {}".format(epoch, epoch_loss))
@@ -51,6 +54,7 @@ def test(vae, testloader, filename, epoch, total_epochs, sample_size):
     '''
 
     vae.eval()  # set to inference mode
+    
     with torch.no_grad():
         if (epoch % 10 == 0) or (epoch == (total_epochs - 1)):
             samples = vae.sample(sample_size).cpu()
@@ -60,11 +64,11 @@ def test(vae, testloader, filename, epoch, total_epochs, sample_size):
         
         loss_trace = []
         for data in testloader:
-            input, _ = data
-            input =  input.to(device)
+            x, _ = data
+            x =  x.to(device)
                 
             loss = vae(input)
-            loss_trace.append(-loss.item()/len(input))  # noramlize the loss by the batch size
+            loss_trace.append(-loss.item()/len(x))  # noramlize the loss by the batch size
         
         test_loss = np.mean(loss_trace)
         print ("Epoch: {}, Test Loss: {}".format(epoch, test_loss))
@@ -77,12 +81,14 @@ def visualize_elbo(train_loss, test_loss):
         @note: show on the same figure the train loss and test loss
     '''
     plt.figure()       
+    # Plot both train and test loss on the same figure
     plt.plot(train_loss, linewidth=3, color='red', label='Train ELBO')
     plt.plot(test_loss, linewidth=3, color='green', label='Test ELBO')
     plt.legend()
     plt.xlabel('epoch', fontsize=12)
     plt.ylabel('ELBO', fontsize=12)
     plt.grid(True)
+    # Save the plot as a png image
     plt.savefig('train&test_ELBO.png')
 
 def main(args):
@@ -132,7 +138,8 @@ def main(args):
         # Test Phase
         loss = test(vae, testloader, filename, epoch, args.epochs, args.sample_size)
         test_loss_trace.append(loss)
-    
+        
+    # Plot the train and test loss trace
     visualize_elbo(train_loss_trace, test_loss_trace)
 
 

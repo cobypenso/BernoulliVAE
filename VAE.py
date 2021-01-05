@@ -1,4 +1,5 @@
 ## Coby Penso 208254128 ##
+
 """VAE model
 """
 
@@ -50,10 +51,10 @@ class Model(nn.Module):
             mu = torch.zeros((sample_size,self.latent_dim)).to(self.device)
         if logvar == None:
             logvar = torch.zeros((sample_size,self.latent_dim)).to(self.device)
-        
-        e = torch.randn_like(mu)
-        z = mu + e*torch.sqrt(torch.exp(logvar))
-        # z = torch.normal(mean = mu, std = logvar)
+            
+        # Sample the latent variable from normal dist
+        z = self.z_sample(mu, logvar)
+        # Pass z through the decoder to generate an image
         x = self.upsample(z)
         x = x.view(-1, 64, 7, 7)
         x = self.decoder(x)
@@ -61,27 +62,45 @@ class Model(nn.Module):
 
 
     def z_sample(self, mu, logvar):
-        e = torch.randn_like(mu)
-        z = mu + e*torch.sqrt(torch.exp(logvar))
+        '''
+            Sample latent variable - the sampling done from normal distribution with the given params
+        '''
+        rand_vec = torch.randn_like(mu)
+        z = mu + rand_vec * torch.sqrt(torch.exp(logvar))
         return z
         
     def loss(self, x, recon, mu, logvar):
-        cross_entropy = self.criterion(recon, x)
-        kl_div = 0.5*(torch.exp(logvar) + mu**2 - logvar - 1).sum()
+        '''
+            Loss function - the loss is build from two terms:
+                - BCELoss
+                - KLLoss
+        '''
+        BCELoss = self.criterion(recon, x)
+        KLLoss = 0.5*(torch.exp(logvar) + mu**2 - logvar - 1).sum()
         
-        # Since the optimizer minimizes, we return the negative
-        # of the lower bound that we need to maximize
-#        return (neg_cross_entropy+kl_div) / x.shape[0]
-        return cross_entropy+kl_div
+        return BCELoss + KLLoss
     
     def forward(self, x):
+        '''
+            Forward function - pass x (image) through the VAE (encoder and decoder)
+            
+            @returns - Negative ELBO
+        '''
         latent = self.encoder(x)
         latent = latent.view(-1, 64*7*7)
+        
+        # Calculate mu and logvar
         mu_z = self.mu(latent)
         logvar_z = self.logvar(latent)
+        
+        # Sample from the latent distribution
         z = self.z_sample(mu_z, logvar_z)
-        x_hat = self.upsample(z)
-        x_hat = x_hat.view(-1, 64, 7, 7)
-        x_hat = self.decoder(x_hat)
-        neg_elbo = self.loss(x, x_hat, mu_z, logvar_z)
-        return neg_elbo
+        
+        # Pass through the decoder
+        x_out = self.upsample(z)
+        x_out = x_out.view(-1, 64, 7, 7)
+        x_out = self.decoder(x_out)
+        
+        # Calculate the loss
+        negative_ELBO = self.loss(x, z_out, mu_z, logvar_z)
+        return negative_ELBO
