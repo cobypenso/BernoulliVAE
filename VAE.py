@@ -102,5 +102,5 @@ class Model(nn.Module):
         x_out = self.decoder(x_out)
         
         # Calculate the loss
-        negative_ELBO = self.loss(x, z_out, mu_z, logvar_z)
+        negative_ELBO = self.loss(x, x_out, mu_z, logvar_z)
         return negative_ELBO
